@@ -1,0 +1,10 @@
+gymnasium
+pygame
+matplotlib
+ipykernel
+flappy-bird-gymnasium
+tensorflow
+torch
+torchvision
+torchaudio
+pyyaml
