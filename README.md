@@ -113,6 +113,16 @@ The `images/` folder contains visual aids to understand the DQN architecture:
 
 ---
 
+## links to the other Readme
+
+[agent.py ReadMe](agent.md)
+
+[dqn.py ReadMe](dqn.md)
+
+[experience_replay.py ReadMe](experience_replay.md)
+
+---
+
 ## 📝 License
 This project is open-source and available for educational and research purposes.
 
