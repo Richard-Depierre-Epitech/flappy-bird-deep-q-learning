@@ -1,5 +1,6 @@
 import argparse
-import datetime
+# import datetime as dt
+from datetime import datetime, timedelta
 import os
 import flappy_bird_gymnasium
 import gymnasium
@@ -29,7 +30,7 @@ matplotlib.use('Agg')
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-class Agent:
+class Agent():
     def __init__(self, hyperparameter_set):
         with open('./hyperparemeters.yml', 'r') as file:
             all_hyperparameters_sets = yaml.safe_load(file)
@@ -59,23 +60,30 @@ class Agent:
         self.GRAPH_FILE = os.path.join(RUNS_DIR, f'{hyperparameter_set}.png')
 
     def run(self, is_training, render=False):
-        # env = gymnasium.make("FlappyBird-v0", render_mode="human", use_lidar=True)
-        env = gymnasium.make("CartPole-v1", render_mode='human' if render else None, **self.env_make_params)
-        number_of_episodes = 1
+        if is_training:
+            start_time = datetime.now()
+            last_graph_update_time = start_time
+            log_message = f"{start_time.strftime(DATE_FORMAT)}: Training starting..."
+            print(log_message)
+            with open(self.LOG_FILE, 'w') as file:
+                file.write(log_message + '\n')
+
+        env = gymnasium.make(self.env_id, render_mode='human' if render else None, **self.env_make_params)
+
         num_actions = env.action_space.n
         num_states = env.observation_space.shape[0]
 
         rewards_per_episode = []
         epsilon_history = []
 
-        policy_dqn = DQN(num_states, num_actions, self.fc1_nodes).to(device)
+        policy_dqn = DQN(num_states, num_actions, self.fc1_nodes, self.enable_dueling_dqn).to(device)
 
         if (is_training):
             memory = ReplayMemory(self.replay_memory_size)
 
             epsilon = self.epsilon_init
 
-            target_dqn = DQN(num_states, num_actions).to(device)
+            target_dqn = DQN(num_states, num_actions, self.fc1_nodes, self.enable_dueling_dqn).to(device)
             target_dqn.load_state_dict(policy_dqn.state_dict())
 
             step_count = 0
@@ -139,18 +147,22 @@ class Agent:
 
                     torch.save(policy_dqn.state_dict(), self.MODEL_FILE)
                     best_reward = episode_reward
+                current_time = datetime.now()
+                if current_time - last_graph_update_time > timedelta(seconds=10):
+                    self.save_graph(rewards_per_episode, epsilon_history)
+                    last_graph_update_time = current_time
 
-            epsilon = max(epsilon * self.epsilon_decay, self.epsilon_min)
-            epsilon_history.append(epsilon)
 
-            if len(memory) > self.mini_batch_size:
-                mini_batch = memory.sample(self.mini_batch_size)
+                if len(memory) > self.mini_batch_size:
+                    mini_batch = memory.sample(self.mini_batch_size)
 
-                self.optimize(mini_batch, policy_dqn, target_dqn)
+                    epsilon = max(epsilon * self.epsilon_decay, self.epsilon_min)
+                    epsilon_history.append(epsilon)
+                    self.optimize(mini_batch, policy_dqn, target_dqn)
 
-                if step_count > self.network_sync_rate:
-                    target_dqn.load_state_dict(policy_dqn.state_dict())
-                    step_count = 0
+                    if step_count > self.network_sync_rate:
+                        target_dqn.load_state_dict(policy_dqn.state_dict())
+                        step_count = 0
     def save_graph(self, rewards_per_episode, epsilon_history):
         # Save plots
         fig = plt.figure(1)
@@ -194,14 +206,19 @@ class Agent:
         terminations = torch.tensor(terminations).float().to(device)
 
         with torch.no_grad():
-            # Calculate target Q values (expected returns)
-            target_q = rewards + (1-terminations) * self.discount_factor_g * target_dqn(new_states).max(dim=1)[0]
-            '''
-                target_dqn(new_states)  ==> tensor([[1,2,3],[4,5,6]])
-                    .max(dim=1)         ==> torch.return_types.max(values=tensor([3,6]), indices=tensor([3, 0, 0, 1]))
-                        [0]             ==> tensor([3,6])
-            '''
+            if self.enable_double_dqn:
+                best_actions_from_policy = policy_dqn(new_states).argmax(dim=1)
 
+                target_q = rewards + (1-terminations) * self.discount_factor_g * \
+                                target_dqn(new_states).gather(dim=1, index=best_actions_from_policy.unsqueeze(dim=1)).squeeze()
+            else:
+                # Calculate target Q values (expected returns)
+                target_q = rewards + (1-terminations) * self.discount_factor_g * target_dqn(new_states).max(dim=1)[0]
+                '''
+                    target_dqn(new_states)  ==> tensor([[1,2,3],[4,5,6]])
+                        .max(dim=1)         ==> torch.return_types.max(values=tensor([3,6]), indices=tensor([3, 0, 0, 1]))
+                            [0]             ==> tensor([3,6])
+                '''
         # Calcuate Q values from current policy
         current_q = policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
         '''

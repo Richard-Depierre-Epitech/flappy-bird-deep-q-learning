@@ -11,6 +11,46 @@
             "program": "agent.py",
             "console": "integratedTerminal",
             "args": ["cartpole", "--train"]
+        },
+        {
+            "name": "Cartpole",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "agent.py",
+            "console": "integratedTerminal",
+            "args": ["cartpole"]
+        },
+        {
+            "name": "Train Cartpole with 0.99995 decay",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "agent.py",
+            "console": "integratedTerminal",
+            "args": ["cartpole_slower_decay", "--train"]
+        },
+        {
+            "name": "Cartpole with 0.99995 decay",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "agent.py",
+            "console": "integratedTerminal",
+            "args": ["cartpole_slower_decay"]
+        },
+        {
+            "name": "Train Flappy Bird",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "agent.py",
+            "console": "integratedTerminal",
+            "args": ["flappybird", "--train"]
+        },
+        {
+            "name": "Flappy bird",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "agent.py",
+            "console": "integratedTerminal",
+            "args": ["flappybird"]
         }
     ]
 }
