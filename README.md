@@ -63,6 +63,23 @@ Defines a fully connected neural network that predicts Q-values for each action 
 ### **3️⃣ Hyperparameters (`hyperparameters.yml`)**
 Defines environment-specific configurations such as learning rates, discount factors, and epsilon decay for exploration.
 
+
+#### 🔧 Explanation of Each Parameter:
+- **`env_id`**: The Gymnasium environment to be used (e.g., `CartPole-v1`, `FlappyBird-v0`).
+- **`replay_memory_size`**: Maximum number of experiences stored in the replay buffer.
+- **`mini_batch_size`**: Number of experiences sampled per training step.
+- **`epsilon_init`**: Initial value for epsilon (ε) in the ε-greedy policy.
+- **`epsilon_decay`**: Rate at which epsilon decays per step.
+- **`epsilon_min`**: Minimum value epsilon can decay to.
+- **`network_sync_rate`**: Number of steps between syncing the target network with the policy network.
+- **`learning_rate_a`**: Learning rate for the Adam optimizer.
+- **`discount_factor_g`**: Discount factor gamma (γ), determining the importance of future rewards.
+- **`stop_on_reward`**: Training will stop if the cumulative reward in an episode reaches this value.
+- **`fc1_nodes`**: Number of neurons in the first fully connected layer of the DQN.
+- **`env_make_params`**: Optional dictionary to pass additional arguments to the environment (e.g., `use_lidar: False`).
+- **`enable_double_dqn`**: Whether to use Double DQN (improves stability by reducing overestimation).
+- **`enable_dueling_dqn`**: Whether to use Dueling DQN (improves learning by separating state value from action advantages).
+
 ---
 
 ## 📊 Understanding the Training Process
